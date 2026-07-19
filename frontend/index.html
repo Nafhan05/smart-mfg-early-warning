@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Manufacturing Early Warning</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sistem Peringatan Dini Biaya Bahan Baku</h1>
+            <p class="subtitle">Prediksi pergerakan IHPB Bahan Baku untuk sektor Makanan-Minuman</p>
+        </header>
+
+        <main>
+            <section class="input-section">
+                <h2>Input Prediksi</h2>
+                <form id="predictForm">
+                    <div class="form-group">
+                        <label for="sector">Sektor:</label>
+                        <select id="sector" name="sector">
+                            <option value="makanan-minuman">Makanan & Minuman</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="horizon">Horizon Prediksi:</label>
+                        <select id="horizon" name="horizon">
+                            <option value="1">1 Bulan</option>
+                            <option value="2" selected>2 Bulan</option>
+                            <option value="3">3 Bulan</option>
+                        </select>
+                    </div>
+                    <button type="submit" id="predictBtn">Ramalkan</button>
+                </form>
+            </section>
+
+            <section class="result-section" id="resultSection" style="display: none;">
+                <h2>Hasil Prediksi</h2>
+                <div class="result-card">
+                    <div class="prediction-main">
+                        <span class="label">Prediksi IHPB:</span>
+                        <span class="value" id="predictedIndex">-</span>
+                        <span class="change" id="predictedChange">-</span>
+                    </div>
+                    <div class="direction" id="direction">-</div>
+                    <div class="drivers">
+                        <h3>Faktor Pendorong:</h3>
+                        <ul id="keyDrivers"></ul>
+                    </div>
+                    <div class="recommendation">
+                        <h3>Rekomendasi Aksi:</h3>
+                        <p id="recommendation">-</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="loading" id="loadingSection" style="display: none;">
+                <p>Memproses prediksi...</p>
+            </section>
+        </main>
+
+        <footer>
+            <p>COMPFEST 18 — AI Innovation Challenge — Smart Manufacturing</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
