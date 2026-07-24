@@ -1,57 +1,149 @@
 # Data README
 ## Sistem Peringatan Dini Biaya Bahan Baku Manufaktur
 
-### Sumber Data
+### Ringkasan
 
-| Sumber | Deskripsi | Cara Akses | Format |
+Dokumen ini menjelaskan cara memperoleh data mentah untuk proyek prediksi IHPB Bahan Baku sektor Makanan-Minuman.
+
+---
+
+### 1. Sumber Data
+
+| Sumber | Deskripsi | Akses | Status |
 |---|---|---|---|
-| BPS Ekspor-Impor | Data nilai & volume impor bahan baku | https://www.bps.go.id | Excel/CSV |
-| BPS IHPB | Indeks Harga Perdagangan Besar Bahan Baku | https://www.bps.go.id | Excel/CSV |
-| Bank Indonesia | Kurs USD/IDR historis | https://www.bi.go.id | CSV |
+| **BPS WebAPI** | Data Ekspor-Impor & IHPB | https://webapi.bps.go.id | ⚠️ Perlu daftar API key |
+| **BPS Portal** | Data Ekspor-Impor | https://www.bps.go.id/id/exim | ✅ Bisa diakses |
+| **Bank Indonesia** | Kurs USD/IDR (JISDOR) | https://www.bi.go.id | ⚠️ Perlu cari URL alternatif |
 
-### Langkah Memperoleh Data
+---
 
-1. **BPS Ekspor-Impor:**
-   - Kunjungi https://www.bps.go.id
-   - Cari "Ekspor Impor" atau "Perdagangan Luar Negeri"
-   - Filter berdasarkan kode HS yang relevan dengan sektor Makanan-Minuman
-   - Unduh dalam format Excel/CSV
-   - Simpan ke `data/raw/`
+### 2. BPS WebAPI (Rekomendasi Utama)
 
-2. **BPS IHPB:**
-   - Kunjungi https://www.bps.go.id
-   - Cari "Indeks Harga Perdagangan Besar"
-   - Filter berdasarkan sektor terpilih
-   - Unduh data historis bulanan
-   - Simpan ke `data/raw/`
+**Mengapa pakai WebAPI?**
+- Lebih efisien untuk download data historis bulk
+- Format JSON yang mudah diproses
+- Tersedia data dari 2010 ke atas
 
-3. **Kurs USD/IDR:**
-   - Kunjungi https://www.bi.go.id
-   - Cari "Kurs" atau "Exchange Rate"
-   - Unduh data historis kurs tengah
-   - Simpan ke `data/raw/`
+**Cara Pakai:**
 
-### Kode HS untuk Sektor Makanan-Minuman
+1. **Daftar akun:**
+   ```
+   https://webapi.bps.go.id/developer/
+   ```
 
-*(Belum diputuskan — akan ditentukan setelah diskusi tim)*
+2. **Dapatkan API key token** (2-3 token per akun)
 
-Contoh kode HS yang mungkin relevan:
-- 1101: Tepung gandum
-- 1701: Gula
-- 1509: Minyak zaitun
-- 0901: Kopi
-- 0803: Pisang
+3. **Gunakan endpoint:**
+   ```
+   GET https://webapi.bps.go.id/v1/api/list/
+   ```
 
-### Format Data yang Diharapkan
+4. **Parameter penting:**
+   | Parameter | Keterangan | Contoh |
+   |---|---|---|
+   | `model` | Tipe data | "data" untuk data dinamis |
+   | `domain` | Wilayah | "0000" untuk nasional |
+   | `var` | Variable ID | Perlu dicari untuk Ekspor-Impor & IHPB |
+   | `th` | Periode | 1=tahunan, 2:3=bulanan |
+   | `key` | API key | Token yang didaftarkan |
 
-- Semua data harus dalam format bulanan (YYYY-MM)
+---
+
+### 3. Data Ekspor-Impor
+
+**Portal Alternatif:**
+```
+https://www.bps.go.id/id/exim
+```
+
+**Cara Manual (jika tidak pakai WebAPI):**
+1. Kunjungi portal di atas
+2. Filter berdasarkan:
+   - **Jenis**: Impor
+   - **Periode**: Bulanan
+   - **Kode HS**: Sesuai sektor (lihat bawah)
+3. Download dalam format Excel/CSV
+4. Simpan ke `data/raw/`
+
+---
+
+### 4. Data IHPB Bahan Baku
+
+**Akses:**
+- Melalui WebAPI BPS dengan variable ID untuk IHPB
+- Perlu eksplorasi untuk menemukan variable ID yang tepat
+
+**Target:**
+- Indeks bulanan per sektor (Makanan-Minuman)
+- Historis sejak 2010
+
+---
+
+### 5. Data Kurs USD/IDR
+
+**Sumber:** Bank Indonesia
+
+**Jenis Kurs:**
+- **JISDOR**: Kurs acuan harian (Jakarta Interbank Spot Dollar Rate)
+- **Kurs Transaksi BI**: Kurs jual/beli
+
+**Alternatif Akses:**
+- Download CSV dari portal BI
+- Gunakan sumber data kurs dari Yahoo Finance atau sumber lain
+
+---
+
+### 6. Kode HS untuk Sektor Makanan-Minuman
+
+**Kode HS yang Relevan:**
+
+| Kode HS | Komoditas | Keterangan |
+|---|---|---|
+| 1101 | Tepung gandum | Bahan baku roti, mie |
+| 1701, 1702 | Gula | Gula pasir, gula cristal |
+| 1509, 1511 | Minyak nabati | Minyak zaitun, kelapa sawit |
+| 0901 | Kopi | Biji kopi |
+| 0902 | Teh | Teh hitam, teh hijau |
+| 0401, 0402 | Susu | Susu cair, susu bubuk |
+| 0201, 0202 | Daging sapi | Daging segar/bebeku |
+| 0301, 0302, 0303 | Ikan | Ikan segar/bebeku |
+
+**Catatan:**
+- Pilih 2-3 kode HS utama yang paling relevan
+- Pastikan ada data historis yang cukup untuk training
+
+---
+
+### 7. Format Data yang Diharapkan
+
+**Input untuk Model:**
+- Format: Bulanan (YYYY-MM)
 - Kolom minimal: `periode`, `nilai`, `volume` (jika ada)
 - Missing values ditandai dengan NaN
-- Data mentah disimpan apa adanya di `data/raw/`
-- Data bersih (hasil cleaning) disimpan di `data/processed/`
 
-### Catatan Penting
+**Penyimpanan:**
+- `data/raw/`: Data mentah (jangan diedit)
+- `data/processed/`: Data bersih siap training
 
-- Jangan edit file di `data/raw/` — data mentah harus tetap asli
-- Semua processing dilakukan di `data/processed/`
-- Update dokumen ini setiap kali menambah sumber data baru
+---
+
+### 8. Langkah Selanjutnya
+
+1. **Daftar WebAPI BPS** → dapatkan API key
+2. **Eksplorasi variable ID** untuk Ekspor-Impor dan IHPB
+3. **Download sample data** → validasi format
+4. **Tentukan kode HS final** → diskusi tim
+5. **Update dokumen ini** dengan temuan
+
+---
+
+### 9. Catatan Penting
+
+- **Tidak perlu auto-update**: Download sekali saat development
+- **Model sudah pre-trained**: Data historis untuk training, bukan real-time
+- **Pastikan bulanan**: Semua sumber dalam format YYYY-MM
+- **Konsistensi satuan**: Pastikan satuan volume sama di seluruh dataset
+
+---
+
+*Terakhir diperbarui: 24 Juli 2026*
