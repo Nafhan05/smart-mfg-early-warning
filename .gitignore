@@ -46,3 +46,6 @@ docker-compose.override.yml
 
 # Dump/Research (folder lokal, tidak di-push)
 dump/
+
+# Docs (dokumen internal tim, tidak di-push)
+docs/
