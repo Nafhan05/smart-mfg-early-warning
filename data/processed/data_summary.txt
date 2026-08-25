@@ -1,0 +1,41 @@
+============================================================
+DATA PROCESSING SUMMARY
+============================================================
+
+Periode         : 2014-08 s/d 2025-02
+Jumlah baris    : 126
+Jumlah kolom    : 24
+Missing values  : 0
+
+KOLOM:
+  periode                         object      unique=126
+  ihpb_nasional                   float64     min=130.52  max=167.95  mean=150.37
+  ihpb_industri                   float64     min=99.16  max=145.64  mean=124.83
+  ihpb_impor                      float64     min=103.59  max=153.10  mean=124.89
+  ihpb_ekspor                     float64     min=103.29  max=172.82  mean=127.14
+  kurs_tengah                     float64     min=11709.62  max=16346.97  mean=14261.26
+  kurs_jual                       float64     min=11768.17  max=16428.70  mean=14332.56
+  kurs_beli                       float64     min=11651.07  max=16265.23  mean=14189.95
+  year                            int64       min=2014.00  max=2025.00  mean=2019.37
+  bulan                           int64       min=1.00  max=12.00  mean=6.60
+  ihpb_nasional_pct_change        float64     min=-10.42  max=4.55  mean=0.15
+  ihpb_industri_pct_change        float64     min=-31.91  max=6.71  mean=0.10
+  ihpb_impor_pct_change           float64     min=-30.73  max=5.44  mean=-0.04
+  kurs_tengah_pct_change          float64     min=-5.69  max=9.89  mean=0.28
+  kurs_spread                     float64     min=117.10  max=163.47  mean=142.61
+  target_ihpb_h1                  float64     min=130.96  max=167.95  mean=150.58
+  target_change_pct_h1            float64     min=-10.42  max=4.55  mean=0.16
+  target_direction_h1             object      unique=3
+  target_ihpb_h2                  float64     min=131.70  max=167.95  mean=150.76
+  target_change_pct_h2            float64     min=-10.21  max=4.70  mean=0.29
+  target_direction_h2             object      unique=3
+  target_ihpb_h3                  float64     min=132.44  max=167.95  mean=150.94
+  target_change_pct_h3            float64     min=-10.28  max=5.14  mean=0.42
+  target_direction_h3             object      unique=3
+
+============================================================
+TARGET DISTRIBUTION (horizon 1 bulan):
+============================================================
+  stabil    :   71 (56.3%)
+  naik      :   40 (31.7%)
+  turun     :   15 (11.9%)
