@@ -11,7 +11,7 @@ load_dotenv()
 # sehingga cukup memakai OpenAI SDK dengan base_url yang berbeda.
 #
 # Konfigurasi via environment variable (opsional):
-#   LLM_PROVIDER  : openai | gemini | deepseek | openrouter | custom
+#   LLM_PROVIDER  : openai | gemini | deepseek | openrouter | opencode | custom
 #   LLM_API_KEY   : API key provider (fallback ke OPENAI_API_KEY)
 #   LLM_MODEL     : nama model (jika kosong, pakai default provider)
 #   LLM_BASE_URL  : base URL custom (untuk provider = custom)
