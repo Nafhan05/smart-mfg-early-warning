@@ -95,5 +95,6 @@ function displayResult(data) {
 
     recommendation.textContent = data.recommendation;
     emptyResult.hidden = true;
+    emptyResult.classList.add('is-hidden');
     resultContent.hidden = false;
 }

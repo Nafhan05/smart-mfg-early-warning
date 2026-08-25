@@ -84,6 +84,7 @@ h1 { max-width: 650px; margin-bottom: 18px; font-family: Georgia, "Times New Rom
 .error-message { margin: 14px 0 0; padding: 10px 12px; border-radius: 9px; background: #fff0eb; color: #a94127; font-size: .78rem; }
 
 .empty-result { display: grid; place-items: center; min-height: 340px; padding: 30px; border: 1px dashed #d1d8cc; border-radius: 16px; background: #fbfbf5; text-align: center; }
+.empty-result.is-hidden { display: none !important; }
 .empty-result p { max-width: 230px; margin: 14px 0 0; color: var(--muted); font-size: .82rem; }
 .empty-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: var(--green-soft); color: var(--green); font-size: 1.7rem; font-weight: 300; }
 .result-content { animation: reveal .35s ease-out; }
