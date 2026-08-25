@@ -9,8 +9,10 @@ from schemas import PredictRequest, PredictResponse
 
 app = FastAPI(
     title="Smart Manufacturing Early Warning API",
-    description="API untuk prediksi pergerakan IHPB Bahan Baku",
-    version="0.1.0"
+    description="API untuk prediksi pergerakan IHPB Bahan Baku. Satu endpoint utama menerima sektor dan horizon, lalu mengembalikan prediksi beserta faktor pendorong dan rekomendasi aksi.",
+    version="0.1.0",
+    contact={"name": "Tim Rawat Bahan", "url": "https://github.com/Nafhan05/smart-mfg-early-warning"},
+    servers=[{"url": "http://localhost:8000", "description": "Lokal (Docker Compose)"}]
 )
 
 app.add_middleware(
@@ -22,7 +24,10 @@ app.add_middleware(
 )
 
 
-@app.get("/health")
+@app.get("/health", responses={
+    200: {"description": "Layanan berjalan normal"},
+    500: {"description": "Terjadi kesalahan internal"},
+})
 async def health_check():
     """Health check endpoint."""
     return {"status": "ok", "service": "smart-mfg-early-warning"}
@@ -31,7 +36,11 @@ async def health_check():
 from predictor import predictor
 from agent import generate_explanation
 
-@app.post("/predict", response_model=PredictResponse)
+@app.post("/predict", response_model=PredictResponse, responses={
+    200: {"description": "Prediksi berhasil dibuat"},
+    422: {"description": "Validasi gagal: sektor tidak didukung atau horizon di luar 1-3"},
+    500: {"description": "Kesalahan internal (model/data tidak termuat atau error lain)"},
+})
 async def predict(request: PredictRequest):
     """
     Prediksi pergerakan IHPB Bahan Baku.
