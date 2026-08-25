@@ -28,6 +28,9 @@ async def health_check():
     return {"status": "ok", "service": "smart-mfg-early-warning"}
 
 
+from predictor import predictor
+from agent import generate_explanation
+
 @app.post("/predict", response_model=PredictResponse)
 async def predict(request: PredictRequest):
     """
@@ -36,27 +39,30 @@ async def predict(request: PredictRequest):
     - sector: Sektor manufaktur (saat ini hanya "makanan-minuman")
     - horizon_months: Berapa bulan ke depan (1-3)
     """
-    # TODO: Implementasi oleh P3 (Backend Engineer)
-    # 1. Load model dari model/model.pkl
-    # 2. Proses fitur input
-    # 3. Jalankan prediksi
-    # 4. Panggil agent untuk penjelasan
-    # 5. Kembalikan response
-    
-    # Placeholder response untuk testing
-    return PredictResponse(
-        sector=request.sector,
-        horizon_months=request.horizon_months,
-        current_index=100.0,
-        predicted_index=105.0,
-        predicted_change_pct=5.0,
-        direction="naik",
-        key_drivers=[
-            "Pelemahan rupiah terhadap dolar AS",
-            "Kenaikan harga gula global"
-        ],
-        recommendation="Pertimbangkan pembelian stok bahan baku dalam waktu dekat atau eksplorasi alternatif bahan lokal untuk mengurangi eksposur terhadap kenaikan harga."
-    )
+    try:
+        # 1. Jalankan prediksi dari model LightGBM
+        pred_result = predictor.predict(request.sector, request.horizon_months)
+        
+        # 2. Panggil agent untuk penjelasan (LLM / Fallback)
+        agent_result = await generate_explanation(pred_result)
+        
+        # 3. Kembalikan response gabungan
+        return PredictResponse(
+            sector=request.sector,
+            horizon_months=request.horizon_months,
+            current_index=pred_result["current_index"],
+            predicted_index=pred_result["predicted_index"],
+            predicted_change_pct=pred_result["predicted_change_pct"],
+            direction=pred_result["direction"],
+            key_drivers=agent_result["key_drivers"],
+            recommendation=agent_result["recommendation"]
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        # Fallback response for safe error handling during demo
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":
