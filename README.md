@@ -1,82 +1,97 @@
 # Smart Manufacturing Early Warning
 
-Sistem Peringatan Dini Biaya Bahan Baku Manufaktur untuk COMPFEST 18 — AI Innovation Challenge (Pilar: Smart Manufacturing).
+Sistem peringatan dini biaya bahan baku manufaktur — meramal pergerakan **Indeks Harga Perdagangan Besar (IHPB) Bahan Baku** untuk sektor makanan & minuman 1–3 bulan ke depan, lalu menjelaskan faktor pendorong dan memberikan rekomendasi aksi.
 
-## Ringkasan
+Dibuat untuk **COMPFEST 18 — AI Innovation Challenge** (Pilar: Smart Manufacturing).
 
-Sistem ini meramal pergerakan **Indeks Harga Perdagangan Besar (IHPB) Bahan Baku** untuk sektor Makanan-Minuman, 1-3 bulan ke depan, lalu menjelaskan faktor pendorongnya dan memberi rekomendasi aksi ke pengguna.
+---
+
+## Cara Kerja
+
+Pengguna memilih horizon prediksi (1, 2, atau 3 bulan) lalu menekan tombol "Jalankan prediksi". Sistem menampilkan:
+
+- Proyeksi nilai IHPB dan perubahan %
+- Arah pergerakan (naik / turun / stabil)
+- Faktor pendorong utama
+- Rekomendasi aksi bisnis
 
 ## Komponen
 
-1. **Model Prediktif** — Gradient boosting (LightGBM) yang dilatih dari data historis BPS
-2. **Agent Penjelas** — LLM yang menerjemahkan output model menjadi penjelasan dan rekomendasi
-3. **Backend API** — FastAPI endpoint untuk inferensi
-4. **Frontend** — Single-page app untuk interaksi pengguna
+| Komponen | Teknologi | Peran |
+|---|---|---|
+| Model prediktif | Python + LightGBM | Memprediksi perubahan IHPB dari fitur historis |
+| Agent penjelas | Python (OpenAI, opsional) | Menerjemahkan output model jadi narasi & rekomendasi |
+| Backend API | FastAPI | Satu endpoint `POST /predict` |
+| Frontend | HTML + CSS + JS | Satu halaman input → hasil |
+| Infrastruktur | Docker Compose | Menjalankan seluruh sistem dengan satu perintah |
 
 ## Prasyarat
 
-- Docker & Docker Compose
-- API key untuk LLM (OpenAI atau Anthropic) — opsional untuk MVP
+- Docker & Docker Compose (versi terbaru)
+- API key OpenAI — **opsional**. Tanpa API key, agent memakai fallback deterministic sehingga sistem tetap berfungsi penuh.
 
-## Instalasi & Menjalankan
+## Menjalankan
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/[username]/smart-mfg-early-warning.git
+git clone https://github.com/Nafhan05/smart-mfg-early-warning.git
 cd smart-mfg-early-warning
 
-# 2. Buat file .env dari template
-cp .env.example .env
+# 2. (Opsional) Sediakan API key untuk agent LLM
+#    Salin .env.example menjadi .env lalu isi OPENAI_API_KEY.
+#    Tanpa langkah ini sistem tetap berjalan memakai fallback.
 
-# 3. Edit .env dan masukkan API key (jika menggunakan LLM agent)
-# nano .env
+# 3. Jalankan seluruh sistem
+docker compose up --build
 
-# 4. Jalankan seluruh sistem
-docker compose up
-
-# 5. Akses aplikasi
-# Frontend: http://localhost:3000
-# Backend API: http://localhost:8000
-# API Docs: http://localhost:8000/docs
+# 4. Akses
+#    Frontend : http://localhost:3000
+#    Backend  : http://localhost:8000
+#    API docs : http://localhost:8000/docs
 ```
 
 ## Struktur Folder
 
 ```
 smart-mfg-early-warning/
-├── README.md                 # Dokumen ini
-├── docker-compose.yml        # Konfigurasi Docker
-├── .env.example              # Template environment variables
-├── data/
-│   ├── raw/                  # Data mentah BPS, IHPB, Kurs
-│   ├── processed/            # Data bersih siap training
-│   └── README.md             # Sumber & cara peroleh data
-├── notebooks/                # EDA, tidak di-deploy
-├── model/
-│   ├── train.py              # Script training (jalan manual sekali)
-│   ├── features.py           # Feature engineering
-│   └── evaluate.py           # Backtesting & evaluasi
+├── README.md
+├── docker-compose.yml          # Orkestrasi backend + frontend
+├── .env.example                # Template variabel lingkungan (opsional)
 ├── backend/
-│   ├── main.py               # Entry point FastAPI
-│   ├── predictor.py          # Load model, fungsi predict()
-│   ├── agent.py              # Logic panggil LLM
-│   ├── schemas.py            # Request/response Pydantic
-│   ├── requirements.txt      # Python dependencies
-│   └── Dockerfile            # Container backend
+│   ├── main.py                 # Entry point FastAPI (endpoint /health & /predict)
+│   ├── predictor.py            # Memuat model & dataset, fungsi predict()
+│   ├── agent.py                # Penjelasan & rekomendasi (LLM + fallback)
+│   ├── schemas.py              # Skema request/response Pydantic
+│   ├── requirements.txt
+│   └── Dockerfile
 ├── frontend/
-│   ├── index.html            # Single page app
-│   ├── style.css             # Styling
-│   └── app.js                # Logic frontend
-└── docs/
-    └── architecture.md       # Diagram arsitektur
+│   ├── index.html              # Satu halaman aplikasi
+│   ├── style.css
+│   └── app.js                  # Pemanggil API /predict
+├── model/
+│   ├── train.py                # Script training LightGBM
+│   ├── features.py             # Feature engineering (dipakai saat inference)
+│   ├── evaluate.py             # Backtesting & evaluasi
+│   ├── model.pkl               # Model pre-trained
+│   └── evaluation/             # Grafik & ringkasan hasil evaluasi
+├── data/
+│   ├── process.py              # Pipeline data mentah → siap training
+│   ├── raw/                    # Data mentah (kurs, IHPB, impor)
+│   ├── processed/              # Dataset siap training + ringkasan
+│   └── README.md               # Sumber & cara memperoleh data
+└── notebooks/                  # Eksplorasi data (tidak di-deploy)
 ```
 
-## API Endpoints
+## API
 
-- `GET /health` — Health check
-- `POST /predict` — Prediksi pergerakan IHPB
+### `GET /health`
+
+Mengecek status layanan.
+
+### `POST /predict`
 
 Contoh request:
+
 ```json
 {
   "sector": "makanan-minuman",
@@ -84,22 +99,63 @@ Contoh request:
 }
 ```
 
+Contoh response:
+
+```json
+{
+  "sector": "makanan-minuman",
+  "horizon_months": 2,
+  "current_index": 156.3,
+  "predicted_index": 155.9,
+  "predicted_change_pct": -0.26,
+  "direction": "stabil",
+  "key_drivers": [
+    "Pergerakan ini sangat dipengaruhi oleh tren pada kurs rupiah terhadap usd.",
+    "Selain itu, indeks harga industri juga menjadi faktor pendorong utama."
+  ],
+  "recommendation": "Pertahankan tingkat persediaan normal, karena tidak ada proyeksi gejolak harga yang signifikan dalam waktu dekat."
+}
+```
+
+| Field | Keterangan |
+|---|---|
+| `direction` | `naik`, `turun`, atau `stabil` |
+| `key_drivers` | Faktor pendorong utama dari feature importance model |
+| `recommendation` | Rekomendasi aksi (stocking, tunda beli, dsb.) |
+
+Dokumentasi interaktif tersedia di `http://localhost:8000/docs`.
+
+## Data
+
+| Data | Sumber | Periode |
+|---|---|---|
+| Kurs USD/IDR | Yahoo Finance | 2010–2026 |
+| IHPB (Nasional, Industri, Impor) | BPS | 2003–2025 |
+| Nilai impor per komoditas (HS 17) | BPS | 2014–2025 |
+
+Data mentah disimpan di `data/raw/`, diproses oleh `data/process.py`, dan hasilnya (`dataset_ready.csv`) menjadi input training. Detail sumber ada di `data/README.md`.
+
 ## Model
 
-Model sudah pre-trained dan tersimpan di `model/model.pkl`. Untuk re-training:
+Model sudah **pre-trained** dan tersimpan di `model/model.pkl`. Untuk melatih ulang:
 
 ```bash
-cd model
-python train.py
+# 1. Proses data mentah menjadi dataset siap training
+python data/process.py
+
+# 2. Latih model
+python model/train.py
 ```
+
+Hasil evaluasi (MAE, RMSE, directional accuracy, grafik prediksi vs aktual) ada di `model/evaluation/`.
 
 ## Catatan Teknis
 
-- Data historis diambil dari BPS (Ekspor-Impor, IHPB) dan Bank Indonesia (Kurs)
-- Model menggunakan gradient boosting untuk prediksi time-series tabular
-- Agent menggunakan LLM API untuk menghasilkan penjelasan dan rekomendasi
-- Seluruh sistem bisa dijalankan dengan satu perintah `docker compose up`
+- Prediksi memakai **perubahan %** (pct_change) dari nilai IHPB saat ini — lebih stabil untuk deret waktu pendek.
+- Split data berbasis waktu (time-based), bukan acak, untuk menghindari bocornya informasi masa depan.
+- Semua variabel (model, dataset) dimuat dari environment variable; tanpa API key, agent menggunakan fallback deterministic.
+- Tidak memerlukan database — data disimpan sebagai file lokal.
 
 ## Lisensi
 
-Project ini dibuat untuk COMPFEST 18 — AI Innovation Challenge.
+Dibuat untuk COMPFEST 18 — AI Innovation Challenge.
