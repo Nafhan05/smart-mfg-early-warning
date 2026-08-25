@@ -125,6 +125,26 @@ Contoh response:
 
 Dokumentasi interaktif tersedia di `http://localhost:8000/docs`.
 
+### Agent Multi-Provider
+
+Agent penjelas mendukung beberapa provider LLM via endpoint OpenAI-compatible. Konfigurasi lewat `.env`:
+
+```env
+LLM_PROVIDER=openai        # openai | gemini | deepseek | openrouter | custom
+LLM_API_KEY=your-api-key
+LLM_MODEL=gpt-3.5-turbo    # opsional, default per provider
+LLM_BASE_URL=              # wajib jika LLM_PROVIDER=custom
+```
+
+| Provider | Base URL default | Model default |
+|---|---|---|
+| `openai` | `https://api.openai.com/v1` | `gpt-3.5-turbo` |
+| `gemini` | `https://generativelanguage.googleapis.com/v1beta/openai/` | `gemini-2.0-flash` |
+| `deepseek` | `https://api.deepseek.com/v1` | `deepseek-chat` |
+| `openrouter` | `https://openrouter.ai/api/v1` | `openai/gpt-4o-mini` |
+
+`OPENAI_API_KEY` tetap didukung sebagai fallback. Tanpa API key sama sekali, agent memakai fallback deterministic sehingga seluruh sistem tetap berfungsi.
+
 ## Data
 
 | Data | Sumber | Periode |
