@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import joblib
+import os
 from pathlib import Path
 import sys
 
@@ -18,7 +19,8 @@ class Predictor:
         self.dataset_ready = self.load_data()
 
     def load_model(self):
-        model_path = Path(__file__).parent.parent / "model" / "model.pkl"
+        default_path = Path(__file__).parent.parent / "model" / "model.pkl"
+        model_path = Path(os.getenv("MODEL_PATH", str(default_path)))
         if model_path.exists():
             self.models = joblib.load(model_path)
             print("Models loaded successfully.")
@@ -27,7 +29,8 @@ class Predictor:
             self.models = None
             
     def load_data(self):
-        data_path = Path(__file__).parent.parent / "data" / "processed" / "dataset_ready.csv"
+        default_path = Path(__file__).parent.parent / "data" / "processed" / "dataset_ready.csv"
+        data_path = Path(os.getenv("DATA_PATH", str(default_path)))
         if data_path.exists():
             return pd.read_csv(data_path)
         else:

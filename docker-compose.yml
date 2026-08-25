@@ -7,10 +7,12 @@ services:
       - "8000:8000"
     environment:
       MODEL_PATH: /app/model/model.pkl
+      DATA_PATH: /app/data/processed/dataset_ready.csv
       SECTOR: makanan-minuman
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     volumes:
       - ./model:/app/model:ro
+      - ./data:/app/data:ro
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
