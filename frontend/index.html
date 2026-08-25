@@ -3,65 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Manufacturing Early Warning</title>
+    <meta name="description" content="Prediksi pergerakan biaya bahan baku sektor makanan dan minuman.">
+    <title>Rawat Bahan | Peringatan Dini Biaya Bahan Baku</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Sistem Peringatan Dini Biaya Bahan Baku</h1>
-            <p class="subtitle">Prediksi pergerakan IHPB Bahan Baku untuk sektor Makanan-Minuman</p>
+    <div class="app-shell">
+        <header class="site-header">
+            <a class="brand" href="/" aria-label="Rawat Bahan beranda">
+                <span class="brand-mark">RB</span>
+                <span>Rawat Bahan</span>
+            </a>
+            <div class="header-note">
+                <span class="status-dot" aria-hidden="true"></span>
+                <span>Early warning untuk manufaktur</span>
+            </div>
         </header>
 
         <main>
-            <section class="input-section">
-                <h2>Input Prediksi</h2>
-                <form id="predictForm">
-                    <div class="form-group">
-                        <label for="sector">Sektor:</label>
-                        <select id="sector" name="sector">
-                            <option value="makanan-minuman">Makanan & Minuman</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="horizon">Horizon Prediksi:</label>
-                        <select id="horizon" name="horizon">
-                            <option value="1">1 Bulan</option>
-                            <option value="2" selected>2 Bulan</option>
-                            <option value="3">3 Bulan</option>
-                        </select>
-                    </div>
-                    <button type="submit" id="predictBtn">Ramalkan</button>
-                </form>
-            </section>
-
-            <section class="result-section" id="resultSection" style="display: none;">
-                <h2>Hasil Prediksi</h2>
-                <div class="result-card">
-                    <div class="prediction-main">
-                        <span class="label">Prediksi IHPB:</span>
-                        <span class="value" id="predictedIndex">-</span>
-                        <span class="change" id="predictedChange">-</span>
-                    </div>
-                    <div class="direction" id="direction">-</div>
-                    <div class="drivers">
-                        <h3>Faktor Pendorong:</h3>
-                        <ul id="keyDrivers"></ul>
-                    </div>
-                    <div class="recommendation">
-                        <h3>Rekomendasi Aksi:</h3>
-                        <p id="recommendation">-</p>
-                    </div>
+            <section class="hero-section">
+                <div class="hero-copy">
+                    <p class="eyebrow">Sistem Peringatan Dini</p>
+                    <h1>Ketahui arah biaya bahan baku sebelum berubah.</h1>
+                    <p class="hero-description">Gunakan sinyal IHPB, kurs, dan harga impor untuk menentukan langkah pembelian yang lebih siap.</p>
+                </div>
+                <div class="hero-orbit" aria-hidden="true">
+                    <span class="orbit-ring ring-one"></span>
+                    <span class="orbit-ring ring-two"></span>
+                    <span class="orbit-core">IHPB</span>
+                    <span class="orbit-label label-top">Kurs</span>
+                    <span class="orbit-label label-right">Impor</span>
                 </div>
             </section>
 
-            <section class="loading" id="loadingSection" style="display: none;">
-                <p>Memproses prediksi...</p>
+            <section class="workspace-grid">
+                <section class="input-section panel">
+                    <div class="section-heading">
+                        <div>
+                            <p class="eyebrow">01 / Atur prediksi</p>
+                            <h2>Pilih horizon waktu</h2>
+                        </div>
+                        <span class="step-number">01</span>
+                    </div>
+                    <p class="section-description">Sistem saat ini difokuskan untuk bahan baku sektor makanan dan minuman.</p>
+                    <form id="predictForm">
+                        <div class="form-group">
+                            <label for="sector">Sektor manufaktur</label>
+                            <select id="sector" name="sector">
+                                <option value="makanan-minuman">Makanan dan minuman</option>
+                            </select>
+                        </div>
+                        <fieldset class="horizon-group">
+                            <legend>Prediksi untuk</legend>
+                            <div class="horizon-options">
+                                <label class="horizon-option">
+                                    <input type="radio" name="horizon" value="1">
+                                    <span>1 bulan</span>
+                                </label>
+                                <label class="horizon-option selected">
+                                    <input type="radio" name="horizon" value="2" checked>
+                                    <span>2 bulan</span>
+                                </label>
+                                <label class="horizon-option">
+                                    <input type="radio" name="horizon" value="3">
+                                    <span>3 bulan</span>
+                                </label>
+                            </div>
+                        </fieldset>
+                        <button type="submit" id="predictBtn">
+                            <span>Jalankan prediksi</span>
+                            <span class="button-arrow" aria-hidden="true">-&gt;</span>
+                        </button>
+                    </form>
+                    <p class="form-hint">Prediksi menggunakan model yang telah dilatih dari data historis.</p>
+                    <p class="error-message" id="errorMessage" role="alert" hidden></p>
+                </section>
+
+                <section class="result-section panel" id="resultSection" aria-live="polite">
+                    <div class="section-heading">
+                        <div>
+                            <p class="eyebrow">02 / Sinyal keputusan</p>
+                            <h2>Hasil prediksi</h2>
+                        </div>
+                        <span class="result-period" id="resultPeriod">Belum ada data</span>
+                    </div>
+                    <div class="empty-result" id="emptyResult">
+                        <span class="empty-icon" aria-hidden="true">+</span>
+                        <p>Hasil prediksi akan muncul di sini setelah Anda menjalankan analisis.</p>
+                    </div>
+                    <div class="result-content" id="resultContent" hidden>
+                        <div class="prediction-main">
+                            <div>
+                                <span class="label">Proyeksi IHPB</span>
+                                <strong class="value" id="predictedIndex">-</strong>
+                            </div>
+                            <span class="change" id="predictedChange">-</span>
+                        </div>
+                        <div class="baseline-row">
+                            <span>Indeks saat ini</span>
+                            <strong id="currentIndex">-</strong>
+                        </div>
+                        <div class="direction" id="direction">-</div>
+                        <div class="drivers">
+                            <div class="subsection-heading">
+                                <h3>Faktor pendorong</h3>
+                                <span>Model signal</span>
+                            </div>
+                            <ul id="keyDrivers"></ul>
+                        </div>
+                        <div class="recommendation">
+                            <div class="subsection-heading">
+                                <h3>Rekomendasi aksi</h3>
+                                <span>Next move</span>
+                            </div>
+                            <p id="recommendation">-</p>
+                        </div>
+                    </div>
+                </section>
             </section>
         </main>
 
-        <footer>
-            <p>COMPFEST 18 — AI Innovation Challenge — Smart Manufacturing</p>
+        <footer class="site-footer">
+            <p>Data-informed decisions untuk rantai pasok yang lebih siap.</p>
+            <span>v0.1 MVP</span>
         </footer>
     </div>
 
