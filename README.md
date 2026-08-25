@@ -45,7 +45,7 @@ cd smart-mfg-early-warning
 docker compose up --build
 
 # 4. Akses
-#    Frontend : http://localhost:3000
+#    Frontend : http://localhost:3030
 #    Backend  : http://localhost:8000
 #    API docs : http://localhost:8000/docs
 ```
