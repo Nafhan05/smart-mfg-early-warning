@@ -41,6 +41,11 @@ LLM_PROVIDERS = {
         "model": "openai/gpt-4o-mini",
         "json_mode": False,
     },
+    "opencode": {
+        "base_url": "https://opencode.ai/zen/go/v1",
+        "model": "deepseek-v4-flash",
+        "json_mode": False,
+    },
 }
 
 
