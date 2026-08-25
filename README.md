@@ -100,6 +100,16 @@ python train.py
 - Agent menggunakan LLM API untuk menghasilkan penjelasan dan rekomendasi
 - Seluruh sistem bisa dijalankan dengan satu perintah `docker compose up`
 
+## Konvensi Branch
+
+Setiap pekerjaan dikerjakan di branch terpisah yang berumur pendek lalu di-merge ke `master` saat selesai. Nama branch mengikuti scope conventional commits:
+
+```
+feat/..., fix/..., refactor/..., docs/..., dev/<area>
+```
+
+`master` selalu dijaga dalam kondisi bisa dijalankan (deployable).
+
 ## Lisensi
 
 Project ini dibuat untuk COMPFEST 18 — AI Innovation Challenge.
