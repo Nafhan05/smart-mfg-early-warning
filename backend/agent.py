@@ -180,17 +180,37 @@ async def generate_explanation(prediction_data: dict) -> dict:
             # Fall through to deterministic below
 
     # --- FALLBACK DETERMINISTIC (Bila tidak ada API key atau error) ---
+    current = prediction_data["current_index"]
+    predicted = prediction_data["predicted_index"]
+    change = prediction_data["predicted_change_pct"]
+
+    change_desc = f"naik {change:.2f}%" if change > 0 else f"turun {abs(change):.2f}%" if change < 0 else "stabil"
+
     drivers = [
-        f"Pergerakan ini sangat dipengaruhi oleh tren pada {human_features[0].lower()}.",
-        f"Selain itu, {human_features[1].lower()} juga menjadi faktor pendorong utama.",
+        f"Proyeksi IHPB {horizon} bulan ke depan berada di sekitar {predicted:.2f}, "
+        f"{change_desc} dari indeks saat ini ({current:.2f}).",
+        f"Pergerakan ini sangat dipengaruhi oleh tren pada {human_features[0].lower()} "
+        f"serta {human_features[1].lower()}.",
     ]
 
     if direction == "naik":
-        rec = f"Pertimbangkan untuk mempercepat pembelian stok bahan baku guna mengunci harga saat ini sebelum diproyeksikan naik dalam {horizon} bulan ke depan."
+        rec = (
+            f"Dengan proyeksi kenaikan {change:.2f}% dalam {horizon} bulan ke depan "
+            f"(indeks {current:.2f} menjadi {predicted:.2f}), pertimbangkan untuk mempercepat "
+            f"pembelian stok bahan baku guna mengunci harga sebelum kenaikan terjadi."
+        )
     elif direction == "turun":
-        rec = f"Disarankan untuk menunda pembelian besar-besaran karena tren biaya bahan baku diperkirakan menurun dalam {horizon} bulan ke depan."
+        rec = (
+            f"Karena biaya bahan baku diproyeksikan turun {abs(change):.2f}% dalam {horizon} bulan "
+            f"(indeks {current:.2f} menjadi {predicted:.2f}), disarankan untuk menunda "
+            f"pembelian besar-besaran dan memantau pergerakan pasar."
+        )
     else:
-        rec = "Pertahankan tingkat persediaan normal, karena tidak ada proyeksi gejolak harga yang signifikan dalam waktu dekat."
+        rec = (
+            f"Perubahan diperkirakan hanya {change:+.2f}% dalam {horizon} bulan ke depan "
+            f"(indeks {current:.2f} menjadi {predicted:.2f}). Pertahankan tingkat persediaan "
+            f"normal dan tinjau kembali proyeksi pada bulan berikutnya."
+        )
 
     return {
         "key_drivers": drivers,
