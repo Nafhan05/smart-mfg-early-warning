@@ -11,6 +11,36 @@ const emptyResult = document.getElementById('emptyResult');
 const resultContent = document.getElementById('resultContent');
 const errorMessage = document.getElementById('errorMessage');
 
+const EXAMPLES = [
+    { period: '2024-03', horizon: 2, label: 'Maret 2024 · 2 bulan · proyeksi turun' },
+    { period: '2024-05', horizon: 1, label: 'Mei 2024 · 1 bulan · proyeksi turun' },
+    { period: '2024-04', horizon: 3, label: 'April 2024 · 3 bulan · proyeksi naik' },
+    { period: '2024-09', horizon: 3, label: 'Sep 2024 · 3 bulan · proyeksi naik' },
+];
+
+const sampleSelect = document.getElementById('sampleSelect');
+EXAMPLES.forEach((ex) => {
+    const option = document.createElement('option');
+    option.value = JSON.stringify({ period: ex.period, horizon: ex.horizon });
+    option.textContent = ex.label;
+    sampleSelect.appendChild(option);
+});
+
+const horizonGroup = document.querySelector('.horizon-group');
+const sampleGroup = document.getElementById('sampleGroup');
+
+document.querySelectorAll('input[name="mode"]').forEach((input) => {
+    input.addEventListener('change', () => {
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+        document.querySelectorAll('.mode-option').forEach((option) => {
+            option.classList.toggle('selected', option.querySelector('input').checked);
+        });
+        const isBacktest = mode === 'backtest';
+        sampleGroup.hidden = !isBacktest;
+        horizonGroup.hidden = isBacktest;
+    });
+});
+
 document.querySelectorAll('input[name="horizon"]').forEach((input) => {
     input.addEventListener('change', () => {
         document.querySelectorAll('.horizon-option').forEach((option) => {
@@ -23,7 +53,16 @@ form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const sector = document.getElementById('sector').value;
-    const horizon = Number(document.querySelector('input[name="horizon"]:checked').value);
+    const mode = document.querySelector('input[name="mode"]:checked').value;
+    const body = { sector, mode };
+
+    if (mode === 'backtest') {
+        const selected = JSON.parse(sampleSelect.value);
+        body.horizon_months = selected.horizon;
+        body.sample_period = selected.period;
+    } else {
+        body.horizon_months = Number(document.querySelector('input[name="horizon"]:checked').value);
+    }
 
     predictBtn.disabled = true;
     predictBtn.setAttribute('aria-busy', 'true');
@@ -37,10 +76,7 @@ form.addEventListener('submit', async (e) => {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                sector: sector,
-                horizon_months: horizon
-            })
+            body: JSON.stringify(body)
         });
 
         if (!response.ok) {
@@ -69,6 +105,7 @@ function displayResult(data) {
     const direction = document.getElementById('direction');
     const keyDrivers = document.getElementById('keyDrivers');
     const recommendation = document.getElementById('recommendation');
+    const backtestBlock = document.getElementById('backtestBlock');
 
     const formatNumber = (value) => new Intl.NumberFormat('id-ID', {
         minimumFractionDigits: 2,
@@ -85,7 +122,25 @@ function displayResult(data) {
     direction.textContent = directionLabels[data.direction] || data.direction;
     direction.className = `direction ${data.direction}`;
 
-    document.getElementById('resultPeriod').textContent = `${data.horizon_months} bulan ke depan`;
+    const isBacktest = data.mode === 'backtest';
+    document.getElementById('resultPeriod').textContent = isBacktest
+        ? `${data.sample_period} · ${data.horizon_months} bulan · backtest`
+        : `${data.horizon_months} bulan ke depan`;
+
+    if (isBacktest) {
+        document.getElementById('actualIndex').textContent = formatNumber(data.actual_index);
+        const actualPct = Number(data.actual_change_pct);
+        document.getElementById('actualChange').textContent =
+            `${actualPct > 0 ? '+' : ''}${formatNumber(actualPct)}%`;
+        const deltaAbs = Number(data.delta_abs);
+        const deltaEl = document.getElementById('deltaAbs');
+        deltaEl.textContent = `${deltaAbs > 0 ? '+' : ''}${formatNumber(deltaAbs)}`;
+        deltaEl.className = deltaAbs > 0 ? 'delta-positive' : 'delta-negative';
+        backtestBlock.hidden = false;
+    } else {
+        backtestBlock.hidden = true;
+    }
+
     keyDrivers.innerHTML = '';
     (data.key_drivers || []).forEach((driver) => {
         const li = document.createElement('li');

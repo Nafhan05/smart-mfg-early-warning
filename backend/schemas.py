@@ -33,6 +33,16 @@ class PredictRequest(BaseModel):
         description="Berapa bulan ke depan yang ingin diprediksi (1-3)",
         example=2
     )
+    mode: str = Field(
+        default="latest",
+        description="latest (data terbaru) atau backtest (contoh historis)",
+        example="latest"
+    )
+    sample_period: str | None = Field(
+        default=None,
+        description="Periode YYYY-MM untuk mode backtest, misal '2024-03'",
+        example="2024-03"
+    )
 
 
 class PredictResponse(BaseModel):
@@ -45,6 +55,12 @@ class PredictResponse(BaseModel):
     direction: Direction = Field(..., description="Arah pergerakan: naik/turun/stabil")
     key_drivers: List[str] = Field(..., description="Daftar faktor pendorong utama")
     recommendation: str = Field(..., description="Rekomendasi aksi dari agent")
+    mode: str = Field(default="latest", description="latest atau backtest")
+    sample_period: str | None = Field(default=None, description="Periode contoh historis (mode backtest)")
+    actual_index: float | None = Field(default=None, description="Nilai aktual IHPB (mode backtest)")
+    actual_change_pct: float | None = Field(default=None, description="Perubahan % aktual (mode backtest)")
+    delta_abs: float | None = Field(default=None, description="Selisih prediksi - aktual (mode backtest)")
+    delta_pct: float | None = Field(default=None, description="Selisih % prediksi - aktual (mode backtest)")
     
     class Config:
         json_schema_extra = {

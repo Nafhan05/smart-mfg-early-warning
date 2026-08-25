@@ -53,6 +53,23 @@
                                 <option value="makanan-minuman">Makanan dan minuman</option>
                             </select>
                         </div>
+                        <fieldset class="mode-group">
+                            <legend>Mode prediksi</legend>
+                            <div class="mode-options">
+                                <label class="mode-option selected">
+                                    <input type="radio" name="mode" value="latest" checked>
+                                    <span>Data terbaru</span>
+                                </label>
+                                <label class="mode-option">
+                                    <input type="radio" name="mode" value="backtest">
+                                    <span>Contoh historis</span>
+                                </label>
+                            </div>
+                        </fieldset>
+                        <div class="form-group" id="sampleGroup" hidden>
+                            <label for="sampleSelect">Pilih contoh historis</label>
+                            <select id="sampleSelect" name="sample"></select>
+                        </div>
                         <fieldset class="horizon-group">
                             <legend>Prediksi untuk</legend>
                             <div class="horizon-options">
@@ -102,6 +119,20 @@
                         <div class="baseline-row">
                             <span>Indeks saat ini</span>
                             <strong id="currentIndex">-</strong>
+                        </div>
+                        <div class="backtest-block" id="backtestBlock" hidden>
+                            <div class="baseline-row">
+                                <span>Nilai aktual</span>
+                                <strong id="actualIndex">-</strong>
+                            </div>
+                            <div class="baseline-row">
+                                <span>Perubahan aktual</span>
+                                <strong id="actualChange">-</strong>
+                            </div>
+                            <div class="delta-row">
+                                <span>Delta (prediksi - aktual)</span>
+                                <strong id="deltaAbs">-</strong>
+                            </div>
                         </div>
                         <div class="direction" id="direction">-</div>
                         <div class="drivers">
