@@ -18,28 +18,51 @@ else:
     print("Warning: OPENAI_API_KEY not found in .env. Using fallback agent.")
 
 
+import re
+
 def get_feature_name_human_readable(feature: str) -> str:
-    """Ubah nama kolom menjadi bahasa manusia."""
-    mapping = {
-        "ihpb_impor": "Indeks harga impor",
-        "ihpb_impor_lag_1": "Indeks harga impor bulan lalu",
+    """Ubah nama kolom menjadi bahasa manusia dengan rapi."""
+    
+    # Mapping dasar untuk prefix utama
+    base_mapping = {
+        "ihpb_nasional": "IHPB Nasional",
+        "ihpb_industri": "IHPB Sektor Industri",
+        "ihpb_impor": "IHPB Impor Bahan Baku",
         "kurs_tengah": "Kurs Rupiah terhadap USD",
-        "kurs_tengah_lag_1": "Kurs Rupiah terhadap USD bulan lalu",
-        "ihpb_industri": "Indeks harga industri",
-        "ihpb_nasional_lag_1": "Tren IHPB Nasional bulan sebelumnya",
-        "bulan_sin": "Pola musiman tahunan",
-        "bulan_cos": "Pola musiman tahunan",
-        "is_nataru": "Mendekati periode Lebaran/Nataru",
-        "kurs_tengah_pct_change": "Persentase perubahan kurs Rupiah",
-        "ihpb_impor_pct_change": "Persentase perubahan IHPB Impor"
+        "is_nataru": "Periode mendekati Lebaran/Nataru",
+        "bulan_sin": "Pola musiman siklikal (Sinus)",
+        "bulan_cos": "Pola musiman siklikal (Cosinus)"
     }
     
-    # Cek yang mirip
-    for key, val in mapping.items():
-        if key in feature:
-            return val
+    human_name = feature
+    for base, name in base_mapping.items():
+        if feature.startswith(base):
+            human_name = name
+            break
             
-    return feature.replace("_", " ").title()
+    if human_name == feature:
+        human_name = feature.replace("_", " ").title()
+        
+    # Tambahkan penjelasan suffix jika ada
+    if "_lag_" in feature:
+        lag_num = re.search(r'_lag_(\d+)', feature)
+        if lag_num:
+            human_name += f" ({lag_num.group(1)} bulan sebelumnya)"
+            
+    if "_rolling_mean_" in feature:
+        win_num = re.search(r'_rolling_mean_(\d+)', feature)
+        if win_num:
+            human_name += f" (Rata-rata pergerakan {win_num.group(1)} bulan terakhir)"
+            
+    if "_rolling_std_" in feature:
+        win_num = re.search(r'_rolling_std_(\d+)', feature)
+        if win_num:
+            human_name += f" (Volatilitas {win_num.group(1)} bulan terakhir)"
+            
+    if "_pct_change" in feature:
+        human_name += " (Persentase perubahan)"
+        
+    return human_name
 
 
 async def generate_explanation(prediction_data: dict) -> dict:
