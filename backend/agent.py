@@ -90,7 +90,7 @@ def get_feature_name_human_readable(feature: str) -> str:
         "ihpb_industri": "IHPB Sektor Industri",
         "ihpb_impor": "IHPB Impor Bahan Baku",
         "kurs_tengah": "Kurs Rupiah terhadap USD",
-"is_nataru": "Periode mendekati Lebaran/Nataru",
+        "is_nataru": "Periode mendekati Lebaran/Nataru",
         "bulan_sin": "Pola musiman siklikal (Sinus)",
         "bulan_cos": "Pola musiman siklikal (Cosinus)"
     }
