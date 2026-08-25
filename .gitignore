@@ -15,7 +15,8 @@ build/
 .env.local
 
 # Model artifacts (di-generate, bukan di-commit)
-*.pkl
+# KECUALI model.pkl yang harus di-commit sesuai instruksi lomba
+# *.pkl
 *.joblib
 *.h5
 *.pt
