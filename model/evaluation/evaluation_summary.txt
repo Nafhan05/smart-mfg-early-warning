@@ -1,0 +1,13 @@
+============================================================
+MODEL EVALUATION SUMMARY
+============================================================
+
+Horizon    MAE        RMSE       DirAcc     Naive MAE    Improvement 
+----------------------------------------------------------------
+1 bulan    0.7395     1.1547     33.3       0.3417       -116.5      %
+2 bulan    0.9915     1.4445     41.7       0.7083       -40.0       %
+3 bulan    1.0556     1.3760     66.7       0.8583       -23.0       %
+
+Test period: 12 bulan terakhir
+Training split: time-based (bukan random)
+Model: LightGBM (gradient boosting)

@@ -30,7 +30,6 @@ def directional_accuracy(y_true, y_pred, y_baseline):
     actual_dir = np.sign(y_true - y_baseline)
     pred_dir = np.sign(y_pred - y_baseline)
     
-    # Handle kasus dimana tidak ada perubahan (0)
     actual_dir = np.where(actual_dir == 0, 1, actual_dir)
     pred_dir = np.where(pred_dir == 0, 1, pred_dir)
     
@@ -38,12 +37,25 @@ def directional_accuracy(y_true, y_pred, y_baseline):
     return correct_dir / len(y_true)
 
 
-def train_model(df: pd.DataFrame, target_col: str, feature_cols: list, test_size=12):
-    """Latih model LightGBM untuk memprediksi IHPB."""
-    # Data sudah berurutan berdasarkan waktu, jadi kita lakukan time-based split.
-    # Kita pisahkan beberapa data terakhir untuk testing
+def select_features(X_train, y_train, feature_cols, max_features=15):
+    """Pilih top-N fitur berdasarkan feature importance dari model ringan."""
+    selector = lgb.LGBMRegressor(
+        n_estimators=50, num_leaves=8, learning_rate=0.1,
+        verbose=-1, random_state=42
+    )
+    selector.fit(X_train, y_train)
     
-    # Hilangkan row dimana target bernilai NaN (misalnya row-row terakhir setelah shift)
+    importances = selector.feature_importances_
+    indices = np.argsort(importances)[-max_features:]
+    selected = [feature_cols[i] for i in indices]
+    
+    print(f"  Feature selection: {len(feature_cols)} -> {len(selected)} features")
+    return selected
+
+
+def train_model(df: pd.DataFrame, target_col: str, feature_cols: list, test_size=12):
+    """Latih model LightGBM untuk memprediksi perubahan IHPB."""
+    
     df_clean = df.dropna(subset=[target_col]).copy()
     
     if len(df_clean) <= test_size:
@@ -52,47 +64,68 @@ def train_model(df: pd.DataFrame, target_col: str, feature_cols: list, test_size
     train_df = df_clean.iloc[:-test_size]
     test_df = df_clean.iloc[-test_size:]
     
-    X_train = train_df[feature_cols]
-    y_train = train_df[target_col]
+    # ── Prediksi PERUBAHAN (pct), bukan level absolut ──
+    # Sesuai AGENT_GUIDE §5.4: "prediksi perubahan % dari nilai saat ini
+    # (sering lebih stabil untuk time-series pendek)"
+    y_train_pct = ((train_df[target_col] - train_df['ihpb_nasional']) / train_df['ihpb_nasional']) * 100
+    y_test_pct = ((test_df[target_col] - test_df['ihpb_nasional']) / test_df['ihpb_nasional']) * 100
     
-    X_test = test_df[feature_cols]
-    y_test = test_df[target_col]
+    X_train_all = train_df[feature_cols]
+    X_test_all = test_df[feature_cols]
     
-    # Base/Current value untuk menghitung directional accuracy
-    # (Nilai IHPB saat prediksi dibuat)
-    y_test_base = test_df['ihpb_nasional']
+    # ── Feature selection: kurangi dari ~48 ke ~15 fitur ──
+    selected_features = select_features(X_train_all, y_train_pct, feature_cols, max_features=15)
+    
+    X_train = train_df[selected_features]
+    X_test = test_df[selected_features]
+    
+    y_test_base = test_df['ihpb_nasional'].values
+    y_test_actual = test_df[target_col].values
     
     print(f"  Training shape: {X_train.shape}, Testing shape: {X_test.shape}")
     
-    # Training dengan LightGBM
-    params = {
-        'objective': 'regression',
-        'metric': 'rmse',
-        'boosting_type': 'gbdt',
-        'learning_rate': 0.05,
-        'num_leaves': 15,
-        'max_depth': -1,
-        'verbose': -1,
-        'random_state': 42
-    }
+    # ── Training LightGBM dengan regularisasi kuat ──
+    # Dataset kecil (114 baris) butuh regularisasi agresif
+    model = lgb.LGBMRegressor(
+        objective='regression',
+        boosting_type='gbdt',
+        n_estimators=200,
+        learning_rate=0.03,
+        num_leaves=8,           # Sangat kecil — hindari overfitting
+        min_child_samples=10,   # Min data per leaf
+        subsample=0.7,          # Bagging
+        colsample_bytree=0.7,   # Feature bagging
+        reg_alpha=0.5,          # L1 regularization
+        reg_lambda=1.0,         # L2 regularization
+        verbose=-1,
+        random_state=42
+    )
+    model.fit(X_train, y_train_pct, eval_set=[(X_test, y_test_pct)])
     
-    model = lgb.LGBMRegressor(**params, n_estimators=100)
-    model.fit(X_train, y_train, eval_set=[(X_test, y_test)])
+    # ── Evaluasi: konversi prediksi pct ke absolut ──
+    y_pred_pct = model.predict(X_test)
+    y_pred_abs = y_test_base * (1 + y_pred_pct / 100)
     
-    # Evaluasi
-    y_pred = model.predict(X_test)
-    mae = mean_absolute_error(y_test, y_pred)
-    rmse = root_mean_squared_error(y_test, y_pred)
-    dir_acc = directional_accuracy(y_test.values, y_pred, y_test_base.values)
+    mae = mean_absolute_error(y_test_actual, y_pred_abs)
+    rmse = root_mean_squared_error(y_test_actual, y_pred_abs)
+    dir_acc = directional_accuracy(y_test_actual, y_pred_abs, y_test_base)
     
-    print(f"  Evaluation - MAE: {mae:.4f}, RMSE: {rmse:.4f}, DirAcc: {dir_acc*100:.2f}%")
+    # Naive baseline
+    naive_mae = mean_absolute_error(y_test_actual, y_test_base)
     
-    return model, feature_cols, mae, rmse, dir_acc
+    print(f"  MAE: {mae:.4f} (naive: {naive_mae:.4f}) | RMSE: {rmse:.4f} | DirAcc: {dir_acc*100:.1f}%")
+    
+    return model, selected_features, mae, rmse, dir_acc
 
 
 def main():
     """Main training pipeline."""
-    print("Loading processed data...")
+    print("=" * 60)
+    print("MODEL TRAINING PIPELINE")
+    print("Smart Manufacturing Early Warning")
+    print("=" * 60)
+    
+    print("\nLoading processed data...")
     try:
         df = load_processed_data()
     except FileNotFoundError as e:
@@ -109,7 +142,7 @@ def main():
                     
     feature_cols = [c for c in df_feat.columns if c not in exclude_cols and pd.api.types.is_numeric_dtype(df_feat[c])]
     
-    print(f"Selected {len(feature_cols)} features: {feature_cols}")
+    print(f"Available features: {len(feature_cols)}")
 
     print("\nTraining models for different horizons...")
     models = {}
@@ -132,7 +165,7 @@ def main():
     print(f"\nSaving models to {model_path}...")
     joblib.dump(models, model_path)
     
-    print("Training selesai. Artifacts tersimpan.")
+    print("\nTraining selesai. Artifacts tersimpan.")
 
 
 if __name__ == "__main__":

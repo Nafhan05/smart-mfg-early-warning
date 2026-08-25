@@ -62,14 +62,14 @@ class Predictor:
         # Ambil feature yang sesuai dengan waktu training
         X = df_feat_latest[features]
         
-        # Predict
-        predicted_index = model.predict(X)[0]
-        
         # Nilai IHPB saat ini
         current_index = df_latest['ihpb_nasional'].values[0]
         
-        # Hitung perubahan
-        predicted_change_pct = ((predicted_index - current_index) / current_index) * 100
+        # Predict — model menghasilkan pct_change, bukan level absolut
+        predicted_change_pct = model.predict(X)[0]
+        
+        # Konversi ke level absolut
+        predicted_index = current_index * (1 + predicted_change_pct / 100)
         
         # Arah
         direction = "stabil"
