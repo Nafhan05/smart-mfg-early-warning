@@ -24,6 +24,7 @@ body {
 
 button, select { font: inherit; }
 button { cursor: pointer; }
+[hidden] { display: none !important; }
 
 .app-shell { max-width: 1180px; margin: 0 auto; padding: 0 28px 24px; }
 
