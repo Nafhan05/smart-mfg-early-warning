@@ -81,15 +81,18 @@ https://www.bps.go.id/id/exim
 
 ### 5. Data Kurs USD/IDR
 
-**Sumber:** Bank Indonesia
+**Sumber aktual:** Yahoo Finance (ticker `USDIDR=X`)
 
-**Jenis Kurs:**
-- **JISDOR**: Kurs acuan harian (Jakarta Interbank Spot Dollar Rate)
-- **Kurs Transaksi BI**: Kurs jual/beli
+**Kolom pada data yang dipakai (`data/raw/kurs_usd_idr.csv`):**
+- `periode` — bulan-tahun (YYYY-MM)
+- `kurs_tengah` — rata-rata bulanan kurs tengah
+- `kurs_jual` / `kurs_beli` — aproksimasi spread ±0.5%
 
-**Alternatif Akses:**
-- Download CSV dari portal BI
-- Gunakan sumber data kurs dari Yahoo Finance atau sumber lain
+**Alternatif (tidak dipakai di MVP):**
+- **JISDOR** — kurs acuan harian Bank Indonesia
+- **Kurs Transaksi BI** — kurs jual/beli resmi
+
+Data kurs diagregasi dari harian ke bulanan (rata-rata) sebelum digabungkan dengan IHPB.
 
 ---
 
@@ -127,13 +130,14 @@ https://www.bps.go.id/id/exim
 
 ---
 
-### 8. Langkah Selanjutnya
+### 8. Catatan Implementasi
 
-1. **Daftar WebAPI BPS** → dapatkan API key
-2. **Eksplorasi variable ID** untuk Ekspor-Impor dan IHPB
-3. **Download sample data** → validasi format
-4. **Tentukan kode HS final** → diskusi tim
-5. **Update dokumen ini** dengan temuan
+- Data mentah diproses oleh `data/process.py` menjadi `data/processed/dataset_ready.csv`.
+- Data yang dipakai di MVP:
+  - Kurs USD/IDR (Yahoo Finance, 2010–2026)
+  - IHPB Nasional, Industri, Impor (BPS, 2003–2025)
+  - Nilai impor gula HS 17 (BPS, 2014–2025)
+- Sumber cadangan (WebAPI BPS) tidak dipakai karena tidak menyediakan data detail untuk tabel yang dibutuhkan.
 
 ---
 
