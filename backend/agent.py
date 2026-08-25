@@ -1,21 +1,77 @@
 import os
+import json
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Cek apakah OpenAI API Key tersedia
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# ============================================================
+# Multi-provider LLM
+# ------------------------------------------------------------
+# Semua provider di bawah menyediakan endpoint OpenAI-compatible,
+# sehingga cukup memakai OpenAI SDK dengan base_url yang berbeda.
+#
+# Konfigurasi via environment variable (opsional):
+#   LLM_PROVIDER  : openai | gemini | deepseek | openrouter | custom
+#   LLM_API_KEY   : API key provider (fallback ke OPENAI_API_KEY)
+#   LLM_MODEL     : nama model (jika kosong, pakai default provider)
+#   LLM_BASE_URL  : base URL custom (untuk provider = custom)
+#   LLM_JSON_MODE : "true"/"false" — aktifkan response_format json
+#
+# Tanpa API key sama sekali, agent memakai fallback deterministic.
+# ============================================================
 
-if OPENAI_API_KEY:
+LLM_PROVIDERS = {
+    "openai": {
+        "base_url": "https://api.openai.com/v1",
+        "model": "gpt-3.5-turbo",
+        "json_mode": True,
+    },
+    "gemini": {
+        "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
+        "model": "gemini-2.0-flash",
+        "json_mode": False,
+    },
+    "deepseek": {
+        "base_url": "https://api.deepseek.com/v1",
+        "model": "deepseek-chat",
+        "json_mode": True,
+    },
+    "openrouter": {
+        "base_url": "https://openrouter.ai/api/v1",
+        "model": "openai/gpt-4o-mini",
+        "json_mode": False,
+    },
+}
+
+
+def _resolve_llm_config():
+    """Resolve provider, API key, model, dan base URL dari env."""
+    provider = os.getenv("LLM_PROVIDER", "openai").strip().lower()
+    config = LLM_PROVIDERS.get(provider, LLM_PROVIDERS["openai"])
+
+    api_key = os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
+    model = os.getenv("LLM_MODEL") or config["model"]
+    base_url = os.getenv("LLM_BASE_URL") or config["base_url"]
+    json_mode = os.getenv("LLM_JSON_MODE", str(config["json_mode"])).lower() in (
+        "1", "true", "yes"
+    )
+    return provider, api_key, model, base_url, json_mode
+
+
+provider, llm_api_key, llm_model, llm_base_url, llm_json_mode = _resolve_llm_config()
+
+client = None
+if llm_api_key:
     try:
         from openai import AsyncOpenAI
-        client = AsyncOpenAI(api_key=OPENAI_API_KEY)
+
+        client = AsyncOpenAI(api_key=llm_api_key, base_url=llm_base_url)
+        print(f"LLM provider: {provider} (model: {llm_model})")
     except ImportError:
         client = None
         print("Warning: openai library not installed. Using fallback agent.")
 else:
-    client = None
-    print("Warning: OPENAI_API_KEY not found in .env. Using fallback agent.")
+    print("Warning: LLM API key tidak ditemukan. Menggunakan fallback agent.")
 
 
 import re
@@ -29,7 +85,7 @@ def get_feature_name_human_readable(feature: str) -> str:
         "ihpb_industri": "IHPB Sektor Industri",
         "ihpb_impor": "IHPB Impor Bahan Baku",
         "kurs_tengah": "Kurs Rupiah terhadap USD",
-        "is_nataru": "Periode mendekati Lebaran/Nataru",
+"is_nataru": "Periode mendekati Lebaran/Nataru",
         "bulan_sin": "Pola musiman siklikal (Sinus)",
         "bulan_cos": "Pola musiman siklikal (Cosinus)"
     }
@@ -73,9 +129,9 @@ async def generate_explanation(prediction_data: dict) -> dict:
     direction = prediction_data["direction"]
     horizon = prediction_data["horizon_months"]
     top_features = prediction_data["top_features"]
-    
+
     human_features = [get_feature_name_human_readable(f) for f in top_features]
-    
+
     if client:
         try:
             prompt = f"""
@@ -99,41 +155,44 @@ async def generate_explanation(prediction_data: dict) -> dict:
                 "recommendation": "rekomendasi aksi"
             }}
             """
-            
-            response = await client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
+
+            kwargs = {
+                "model": llm_model,
+                "messages": [
                     {"role": "system", "content": "Anda adalah analis AI yang menghasilkan output JSON valid."},
-                    {"role": "user", "content": prompt}
+                    {"role": "user", "content": prompt},
                 ],
-                temperature=0.7,
-                response_format={ "type": "json_object" }
-            )
-            
-            import json
+                "temperature": 0.7,
+            }
+            if llm_json_mode:
+                kwargs["response_format"] = {"type": "json_object"}
+
+            response = await client.chat.completions.create(**kwargs)
             result = json.loads(response.choices[0].message.content)
             return {
                 "key_drivers": result.get("key_drivers", human_features),
-                "recommendation": result.get("recommendation", "Pertimbangkan manajemen stok yang lebih berhati-hati.")
+                "recommendation": result.get(
+                    "recommendation", "Pertimbangkan manajemen stok yang lebih berhati-hati."
+                ),
             }
         except Exception as e:
             print(f"LLM API Error: {e}")
             # Fall through to deterministic below
-    
+
     # --- FALLBACK DETERMINISTIC (Bila tidak ada API key atau error) ---
     drivers = [
         f"Pergerakan ini sangat dipengaruhi oleh tren pada {human_features[0].lower()}.",
-        f"Selain itu, {human_features[1].lower()} juga menjadi faktor pendorong utama."
+        f"Selain itu, {human_features[1].lower()} juga menjadi faktor pendorong utama.",
     ]
-    
+
     if direction == "naik":
         rec = f"Pertimbangkan untuk mempercepat pembelian stok bahan baku guna mengunci harga saat ini sebelum diproyeksikan naik dalam {horizon} bulan ke depan."
     elif direction == "turun":
         rec = f"Disarankan untuk menunda pembelian besar-besaran karena tren biaya bahan baku diperkirakan menurun dalam {horizon} bulan ke depan."
     else:
         rec = "Pertahankan tingkat persediaan normal, karena tidak ada proyeksi gejolak harga yang signifikan dalam waktu dekat."
-        
+
     return {
         "key_drivers": drivers,
-        "recommendation": rec
+        "recommendation": rec,
     }

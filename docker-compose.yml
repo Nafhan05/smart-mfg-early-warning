@@ -10,6 +10,11 @@ services:
       DATA_PATH: /app/data/processed/dataset_ready.csv
       SECTOR: makanan-minuman
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_JSON_MODE: ${LLM_JSON_MODE:-}
     volumes:
       - ./model:/app/model:ro
       - ./data:/app/data:ro
